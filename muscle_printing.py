@@ -20,7 +20,9 @@ def ExtruderRatio(d=1.6, D=15.778, applied_percentage=1):
     = (D/d)^2*applied_percentage
     D: mm, diameter of the cylinder
     d: mm, diameter of the extruder
-    applied_percentage: A ratio factor that controls the extruding ratio."""
+    applied_percentage: A ratio factor that controls the extruding ratio.
+    @boxiXia;@JacobJ77
+    """
     ratio = d ** 2 / (D ** 2) # extruder ratio
     #applied_percentage: applied percentage for extruding
     applied_ratio = ratio * applied_percentage
@@ -31,7 +33,9 @@ def initilize_parameters(tool_num, is_absolute=True, is_mm=True, feedrate=1500):
     them as imputs to the function, respectively. is_absolute will choose absolute coodinate
     frame is given any value other than zero. Choose zero for realtive coordinates. is_mm will
     set units to millimeters if input is any value other than zero. Choose zero for units in
-    inches."""
+    inches.
+    @JacobJ77;@boxiXia
+    """
     t = 'T{0}'.format(tool_num)
     if is_absolute:
         frame = 'G90'
@@ -42,42 +46,7 @@ def initilize_parameters(tool_num, is_absolute=True, is_mm=True, feedrate=1500):
     else:
         unit = 'G20'
     return '{0}\n{1}\n{2}\nG0 F{3}\nM83\n'.format(t, frame, unit, feedrate)
-
-def ToolPath(path, ratio=1, a=0.5):
-    """generate a list given [[x0,y0,z0],[x1,y1,z1]...]"""
-    b = 1 - a
-    n = len(path)
-    e_path = np.zeros(n)
-    e_path[1:] = norm(path[1:, :2] - path[0:-1, :2], axis=1) * ratio
-    return ''.join(['G1 X{0:0.4f} Y{1:0.4f} Z{2:0.4f} E{3:0.4f}:{4:.4f}\n'.\
-        format(path[i, 0], path[i, 1], path[i, 2], e_path[i] * a, e_path[i] * b) for i in range(n)])
-
-
-def star_design(layers, delta_z, z_start, scale):
-    """function that will output an array of values that are coodinates of a star. 
-    input paramter is the desired number of layers, the deisred change in z height per layer,
-    and the starting z height""" 
-    prime = np.array([[0,0,z_start],[0,scale * -2,z_start],[0,0,z_start],[0,scale * -2,z_start],[0,0,z_start]])
-    A = np.vstack([np.array([[scale * 0,scale * 0,(z_start) + k * delta_z],[scale * 5,scale * 6,(z_start) + k * delta_z],[scale * 10,scale * 0,(z_start) + k * delta_z],[scale * 0,scale * 4,(z_start) + k * delta_z],[scale * 10,scale * 4,(z_start) + k * delta_z],[scale * 0,scale * 0,(z_start) + k * delta_z]]) 
-    for k in range(0,layers + 1)])
-    star = np.vstack([prime,A]) 
-    return star
-def single_relative_square(l,d):
-    return [(0,l,0),(l,0,0),(0,-l - d,0),(-l - d,0,0)]
-def square(start,l,d,n,up=False):
-    """output array of path for a multilayer square
-    start is the starting point
-    """
-    multi_relative_square_list = [(0,0,0)]
-    for k in range(n):
-        multi_relative_square_list.extend(single_relative_square(l + d * 2 * k,d))
-    multi_square_list = np.cumsum(multi_relative_square_list,axis=0) + start
-    if up:
-        multi_square_list = np.vstack((multi_square_list,multi_square_list[-1,:] + [0,0,d]))
-    return multi_square_list,l + d * 2 * n
-
      
-
 def clear_mixer(ratio,
                 print_location,
                 previous_extruders,
@@ -93,7 +62,9 @@ def clear_mixer(ratio,
     """A funtion that moves the extruder head to a specified location to empty out mixer
     a new materail combination. previous_extruders are the current tools being used in 1x4 array where
     1 is active and 0 is inactive. next_extruders are the tools to be used in the next phase 
-    in 1x4 array where 1 is active and 0 is inactive.""" 
+    in 1x4 array where 1 is active and 0 is inactive.
+    @JacobJ77;@boxiXia
+    """ 
     ext_tool = dump_distance * np.array(next_extruders)
     ret_tool = retract_distance * np.array(previous_extruders) * ratio
     prim_tool = prim_distance * np.array(next_extruders) * ratio
@@ -104,7 +75,7 @@ def clear_mixer(ratio,
             'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(dump_location[0],dump_location[1],dump_location[2]),
             'G1 F{0:.4f}\n'.format(feedrate_extrude),
             'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(ext_tool[0],ext_tool[1],ext_tool[2],ext_tool[3]),
-            'G4 P{0:d}\n'.format(10000),    
+            'G4 P{0:d}\n'.format(15000),    
             'G0 F{0:d}\n'.format(feedrate_quickmove),
             'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(print_location[0],print_location[1],print_location[2]),
             'G1 F{0:d}\n'.format(feedrate_move),
@@ -123,7 +94,7 @@ def clear_mixer(ratio,
             'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(print_location[0],print_location[1],print_location[2]),
             'G1 F{0:d}\n'.format(feedrate_extrude),
             'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(prim_tool[0],prim_tool[1],prim_tool[2],prim_tool[3]),
-            'G4 P{0:d}\n'.format(10000),
+            'G4 P{0:d}\n'.format(15000),
             'G1 F{0:d}\n'.format(feedrate_quickmove),
             'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(print_location[0],print_location[1],print_location[2]),
             'G1 F{0:d}\n'.format(feedrate_move),
@@ -135,6 +106,7 @@ def ToolPath4(path,ratio,mix_ratio,feedrate_move=1000,feedrate_quickmove=1500,**
     optional parameters:
         is_g0 is a numpy bool array specifying wether the point in the path use fast move (G0)
         for example, is_g0 = np.array([True,False,False,False,....])
+        @boxiXia
     """
     if np.shape(path)[0] < 2:# if path points are less than 2
         return ''
@@ -175,6 +147,7 @@ def combine_lines(lines):
     combine a list of line arrays to a single numpy array, transist from one array to another array using G0,
     return the combined lines--unified_lines 
     and a numpy array--is_g0 specifying wether the point in the path use fast move (G0)
+    @boxiXia
     """        
     n_points = [len(points) for points in lines[1:]]
     unified_lines = np.vstack(lines[1:])
@@ -185,7 +158,9 @@ def combine_lines(lines):
     return unified_lines,is_g0
 
 def calculate_tool_change_index(unified_lines,max_reuse_distance):
-    """calculate the index when tool change happens in unified_lines"""
+    """calculate the index when tool change happens in unified_lines
+    @boxiXia
+    """
     # calculate tool_change_index
     reuse_distance = 0
     tool_change_index = 0
@@ -205,6 +180,7 @@ def lines_list_to_gcode_strings(lines_list,gcode_para):
     [Material#,nx3_numpy_array,nx3_numpy_array,nx3_numpy_array...],
     .....
     ]
+    @boxiXia
     """
     # locals().update(gcode_para) #convert dictionary entries into variables
     D,d,applied_percentage = gcode_para['D'],gcode_para['d'],gcode_para['applied_percentage']
@@ -265,7 +241,14 @@ def lines_list_to_gcode_strings(lines_list,gcode_para):
 
 
 def plot_lines_list(lines_list):
-    """plot given a lines_list"""
+    """plot given a lines_list,which is in the format of 
+    [[Material#,nx3_numpy_array,nx3_numpy_array,nx3_numpy_array...],
+    [Material#,nx3_numpy_array,nx3_numpy_array,nx3_numpy_array...],
+    [Material#,nx3_numpy_array,nx3_numpy_array,nx3_numpy_array...],
+    .....
+    ]
+    @boxiXia
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     for lines in lines_list:
@@ -277,15 +260,3 @@ def plot_lines_list(lines_list):
                 #last lines
                 pass
     plt.show()
-
-def circle(center,r,z,d=None):
-    n = 50
-    line = np.empty((n,3))
-    if d is not None:
-        t = np.linspace(0,2 * np.pi - np.arcsin(d / 2. / r),n) - np.pi
-    else:
-        t = np.linspace(0,2 * np.pi,n) - np.pi / 2
-    line[:,0] = center[0] + r * np.cos(t)
-    line[:,1] = center[1] - r * np.sin(t)
-    line[:,2] = z
-    return line
