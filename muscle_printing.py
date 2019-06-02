@@ -46,7 +46,35 @@ def initilize_parameters(tool_num, is_absolute=True, is_mm=True, feedrate=1500):
     else:
         unit = 'G20'
     return '{0}\n{1}\n{2}\nG0 F{3}\nM83\n'.format(t, frame, unit, feedrate)
-     
+
+def multipledumping(amount,extruder,feedrate_extrude=0.01,delta = 0.5,wait = 500,lastWait = 6000):
+    """
+    Return a string for dumping, it consist of alternate of dumping gcode and wait, the last wait time is lastWait:
+    Input:
+        amount           - the total distance of an individual extruder has to travel to extrude material
+        extruder         - tools being used in 1x4 float array where 1 is 100% active and 0 is inactive, e.g. 0.5 is 50% active
+        feedrate_extrude - the feedrate for extrusion only
+        delta            - the delta distance of each dumping
+        wait             - the waiting time for each wait 
+        lastWait         - the waiting time after last dumping
+    @BoxiXia
+    """
+    dumping_list = ['G1 F{0:.6f}\n'.format(feedrate_extrude)]
+    num_dumping = int(np.ceil(amount/delta))
+    try:
+        amount_delta = amount/num_dumping*np.array(extruder,dtype = float)
+    except ZeroDivisionError:
+        amount_delta = [0,0,0,0]
+    for k in range(num_dumping):
+        dumping_list.append('G1 E{0:.6f}:{1:.6f}:{2:.6f}:{3:.6f} F{4:.6f}\n'.format(amount_delta[0],amount_delta[1],
+                                                                                         amount_delta[2],amount_delta[3],
+                                                                                         feedrate_extrude))
+        if(k<num_dumping-1):
+            dumping_list.append('G4 P{0}\n'.format(wait))
+        else:
+            dumping_list.append('G4 P{0}\n'.format(lastWait))
+    return ''.join(dumping_list)
+
 def clear_mixer(ratio,
                 print_location,
                 previous_extruders,
@@ -65,40 +93,31 @@ def clear_mixer(ratio,
     in 1x4 array where 1 is active and 0 is inactive.
     @JacobJ77;@boxiXia
     """ 
-    ext_tool = dump_distance * np.array(next_extruders)
-    ret_tool = retract_distance * np.array(previous_extruders) * ratio
-    prim_tool = prim_distance * np.array(next_extruders) * ratio
+    #print(dump_distance,next_extruders)     
+
     if 'normal' in utility:
         # retract->goto dump position->dump material->negative
         # priming(retract)->go to print position->priming->wait
         return ''.join(['G0 F{0:d}\n'.format(feedrate_quickmove),
-            'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(dump_location[0],dump_location[1],dump_location[2]),
-            'G1 F{0:.4f}\n'.format(feedrate_extrude),
-            'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(ext_tool[0],ext_tool[1],ext_tool[2],ext_tool[3]),
-            'G4 P{0:d}\n'.format(15000),    
+            'G91; Set to Relative Positioning\n',
+            'G0 Z8;relative move tip up\n',
+            'G90; Set to Absolute Positioning\n',
+            'G0 X{0:0.6f} Y{1:0.6f}\n'.format(dump_location[0],dump_location[1]),
+            'G0 Z{0:0.6f}\n'.format(dump_location[2]),
+
+            multipledumping(dump_distance,next_extruders,feedrate_extrude,delta = 0.05,wait = 250,lastWait = 25000),   
             'G0 F{0:d}\n'.format(feedrate_quickmove),
-            'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(print_location[0],print_location[1],print_location[2]),
+            'G0 X{0:0.6f} Y{1:0.6f} Z{2:0.6f} F{3:d}\n'.format(print_location[0],print_location[1],print_location[2],feedrate_quickmove),
             'G1 F{0:d}\n'.format(feedrate_move),
             'G4 P{0:d}\n'.format(200)])#wait for 200ms
     elif 'last' in utility:# retract->goto dump position->dump material
         return ''.join(['G0 F{0:d}\n'.format(feedrate_quickmove),
-            'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(dump_location[0],dump_location[1],dump_location[2]),
-            'G1 F{0:.4f}\n'.format(feedrate_extrude),
-            'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(ext_tool[0],ext_tool[1],ext_tool[2],ext_tool[3])])#wait for 500ms
-    elif 'init' in utility:
-        return ''.join(['G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(dump_location[0],dump_location[1],dump_location[2]),
-            'G1 F{0:.4f}\n'.format(feedrate_extrude),
-            'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(ext_tool[0],ext_tool[1],ext_tool[2],ext_tool[3]),
-            'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(-prim_tool[0],-prim_tool[1],-prim_tool[2],-prim_tool[3]),
-            'G1 F{0:d}\n'.format(feedrate_quickmove),
-            'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(print_location[0],print_location[1],print_location[2]),
-            'G1 F{0:d}\n'.format(feedrate_extrude),
-            'G1 E{0:0.4f}:{1:0.4f}:{2:0.4f}:{3:0.4f}\n'.format(prim_tool[0],prim_tool[1],prim_tool[2],prim_tool[3]),
-            'G4 P{0:d}\n'.format(15000),
-            'G1 F{0:d}\n'.format(feedrate_quickmove),
-            'G0 X{0:0.4f} Y{1:0.4f} Z{2:0.4f}\n'.format(print_location[0],print_location[1],print_location[2]),
-            'G1 F{0:d}\n'.format(feedrate_move),
-            'G4 P{0:d}\n'.format(200)])
+            'G91; Set to Relative Positioning\n',
+            'G0 Z8;relative move tip up\n',
+            'G90; Set to Absolute Positioning\n',
+            'G0 X{0:0.6f} Y{1:0.6f}\n'.format(dump_location[0],dump_location[1]),
+            'G0 Z{0:0.6f}\n'.format(dump_location[2]), 
+            multipledumping(dump_distance,next_extruders,feedrate_extrude,delta = 0.05,wait = 250,lastWait = 25000)])
 
 def ToolPath4(path,ratio,mix_ratio,feedrate_move=1000,feedrate_quickmove=1500,**kwargs):
     """generate a list of G-code given [[x0,y0,z0],[x1,y1,z1]...]
@@ -124,7 +143,7 @@ def ToolPath4(path,ratio,mix_ratio,feedrate_move=1000,feedrate_quickmove=1500,**
         gcode_list[0] = 'G1 X{0:0.6f} Y{1:0.6f} Z{2:0.6f} E{3:0.6f}:{4:.6f}:{5:.6f}:{6:.6f} F{7:d}\n'.\
                     format(path[0,0],path[0,1],path[0,2],e_path[0] * mix_ratio[0],e_path[0] * mix_ratio[1],e_path[0] * mix_ratio[2],e_path[0] * mix_ratio[3],feedrate_move)
     else:
-        gcode_list[0] = 'G1 X{0:0.6f} Y{1:0.6f} Z{2:0.6f} F{3:d}\n'.\
+        gcode_list[0] = 'G0 X{0:0.6f} Y{1:0.6f} Z{2:0.6f} F{3:d}\n'.\
                     format(path[0,0],path[0,1],path[0,2],feedrate_quickmove)
     if is_g0 is not None:
         for i in range(1,n):
@@ -154,7 +173,14 @@ def combine_lines(lines):
     g0_index = np.zeros(len(n_points),dtype=int)
     g0_index[1:] = np.cumsum(n_points)[:-1]
     is_g0 = np.zeros(len(unified_lines),dtype=bool)
+    # transit from the last point in the previous line to the first point in the current line with fast move
     is_g0[g0_index] = True
+    # make fast move when point_k and point_k+1 has the same (x,y)
+    is_x_equal_y = np.logical_and(unified_lines[:-1,0] == unified_lines[1:,0],unified_lines[:-1,1] == unified_lines[1:,1])
+    is_g0[1:] = np.logical_or(is_x_equal_y,is_g0[1:])
+    if unified_lines.shape[1] == 4: # if the lines is in the form [[x,y,z,is_g0],[x,y,z,is_g0], [x,y,z,is_g0]...]
+        is_g0 = np.logical_or(unified_lines[:,3],is_g0)
+    
     return unified_lines,is_g0
 
 def calculate_tool_change_index(unified_lines,max_reuse_distance):
@@ -180,6 +206,7 @@ def lines_list_to_gcode_strings(lines_list,gcode_para):
     [Material#,nx3_numpy_array,nx3_numpy_array,nx3_numpy_array...],
     .....
     ]
+    Note the numpy array can also be (nx4) in the form [[x,y,z,is_g0],[x,y,z,is_g0], [x,y,z,is_g0]...]
     @boxiXia
     """
     # locals().update(gcode_para) #convert dictionary entries into variables
@@ -203,7 +230,7 @@ def lines_list_to_gcode_strings(lines_list,gcode_para):
     len_lines_list = len(lines_list)
     for m in range(len_lines_list):
         tool_initial = lines_list[m][0]
-        print(tool_initial)
+#         print(tool_initial)
         unified_lines, is_g0 = combine_lines(lines_list[m])
         # calculate tool_change_index
         tool_change_index, reuse_distance = calculate_tool_change_index(unified_lines, max_reuse_distance)
@@ -217,8 +244,8 @@ def lines_list_to_gcode_strings(lines_list,gcode_para):
                 # path for extrusion after tool change
                 lines_rest = unified_lines[tool_change_index:, :]
                 is_g0_rest = is_g0[tool_change_index:]
-                g_code_strings.append(ToolPath4(lines_initial, is_g0=is_g0_initial, ratio=syringe_ratio, mix_ratio=TOOL[tool_initial],feedrate_move=feedrate_move))
-                g_code_strings.append(ToolPath4(lines_rest, is_g0=is_g0_rest, ratio=syringe_ratio, mix_ratio=TOOL[tool_rest], start_point=tool_change_point,feedrate_move=feedrate_move))
+                g_code_strings.append(ToolPath4(lines_initial, is_g0=is_g0_initial, ratio=syringe_ratio, mix_ratio=TOOL[tool_initial],feedrate_move=feedrate_move,feedrate_quickmove=feedrate_quickmove))
+                g_code_strings.append(ToolPath4(lines_rest, is_g0=is_g0_rest, ratio=syringe_ratio, mix_ratio=TOOL[tool_rest], start_point=tool_change_point,feedrate_move=feedrate_move,feedrate_quickmove=feedrate_quickmove))
 
                 g_code_strings.append(clear_mixer(ratio=syringe_ratio,
                                                   print_location=lines_list[m+1][1][0, :],
@@ -226,17 +253,18 @@ def lines_list_to_gcode_strings(lines_list,gcode_para):
                                                   next_extruders=TOOL[tool_rest],
                                                   dump_location=dump_location,
                                                   dump_distance=(total_distance - reuse_distance) * syringe_ratio,
-                                                  feedrate_extrude=feedrate_extrude))
+                                                  feedrate_extrude=feedrate_extrude,
+                                                  feedrate_quickmove = feedrate_quickmove))
             else:
-                g_code_strings.append(ToolPath4(unified_lines, is_g0=is_g0, ratio=syringe_ratio, mix_ratio=TOOL[tool_initial],feedrate_move=feedrate_move))
+                g_code_strings.append(ToolPath4(unified_lines, is_g0=is_g0, ratio=syringe_ratio, mix_ratio=TOOL[tool_initial],feedrate_move=feedrate_move,feedrate_quickmove=feedrate_quickmove))
         else:
             # last item in lines_list
-            g_code_strings.append(ToolPath4(unified_lines, is_g0=is_g0, ratio=syringe_ratio, mix_ratio=TOOL[tool_initial],feedrate_move=feedrate_move))
+            g_code_strings.append(ToolPath4(unified_lines, is_g0=is_g0, ratio=syringe_ratio, mix_ratio=TOOL[tool_initial],feedrate_move=feedrate_move,feedrate_quickmove=feedrate_quickmove))
             g_code_strings.append(clear_mixer(ratio=syringe_ratio,
                                               print_location=dump_location,
                                               dump_location=dump_location,
                                               previous_extruders=TOOL[tool_initial],
-                                              next_extruders=TOOL[tool_initial], dump_distance=0, utility='last'))
+                                              next_extruders=TOOL[tool_initial], dump_distance=0, utility='last',feedrate_quickmove=feedrate_quickmove))
     return g_code_strings
 
 
@@ -253,7 +281,7 @@ def plot_lines_list(lines_list):
     ax = fig.add_subplot(111, projection='3d')
     for lines in lines_list:
         for k in range(1,len(lines)):
-            ax.plot(lines[k][:,0],lines[k][:,1],lines[k][:,2],c=COLORS[lines[0]])
+            ax.plot(lines[k][:,0],lines[k][:,1],lines[k][:,2],c=COLORS[lines[0]],linewidth=.5)
             try:
                 ax.plot([lines[k][-1,0],lines[k + 1][0,0]],[lines[k][-1,1],lines[k + 1][0,1]],[lines[k][-1,2],lines[k + 1][0,2]],'m',linewidth=.5)
             except IndexError:
