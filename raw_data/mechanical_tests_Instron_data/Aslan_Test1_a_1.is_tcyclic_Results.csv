@@ -1,0 +1,7 @@
+Export Raw Data : Export raw data,True
+
+Results Table 1
+,Axial Gauge Length (Strain Source),Modulus (E-modulus),Tensile stress at Maximum Tensile extension,Time at Maximum Tensile extension,Strain 1 at Break (Standard),Time at Break (Standard)
+,(mm),(GPa),(MPa),(sec),(mm/mm),(sec)
+1,101.60000,0.06311,0.03971,43.74900,-0.00014,43.70500
+
