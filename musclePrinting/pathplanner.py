@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.linalg import norm
-from point_in_polygon import wn_PnPoly
+from musclePrinting.point_in_polygon import wn_PnPoly
 
 def rotation_2d(t):
     """return the rotation matrix (clockwise rotation)"""
