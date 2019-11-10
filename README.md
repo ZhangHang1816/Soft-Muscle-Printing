@@ -12,6 +12,9 @@ The runnable jupyter notebook are [dog_bone muscle.ipynb](https://github.com/box
 ### Photo of the soft muscle printer
 ![Artificial muscle printer](https://raw.githubusercontent.com/boxiXia/Soft-Muscle-Printing/master/figures/muscle%20printer%20front-web.png)
 
+![printing rotating triangle](https://github.com/boxiXia/Soft-Muscle-Printing/blob/master/figures/XiaCover_preview.jpg)
+
+![printed sturctures](https://github.com/boxiXia/Soft-Muscle-Printing/blob/master/figures/XiaFig4_preview.jpg)
 
 ### video of printing a muscle and actuating
 [![supplementary - printing muscle and actuating](https://img.youtube.com/vi/KcunfdATq7U/0.jpg)](https://www.youtube.com/watch?v=KcunfdATq7U)
