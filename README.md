@@ -13,7 +13,7 @@ The raw Inventor model can be found in the [modeling](https://github.com/boxiXia
 The mixer CAD model can be found in in [./modeling/mixer_design](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/mixer_design). The converted stl model can be found in [./modeling/mixer_design/stl_model](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/mixer_design/stl_model).
 The CAD model for laser-cutting the electronics housing can be found in [modeling/lasercut_electronics_housing](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/lasercut_electronics_housing).
 To open the CAD model (\*.ipt and \*.iam file), use [Autodesk Inventor 2019](https://www.autodesk.com/education/free-software/inventor-professional).
-[assembly drwaing](https://github.com/boxiXia/Soft-Muscle-Printing/blob/master/modeling/figures/z_plate_drawing.jpg)
+![assembly drwaing](https://github.com/boxiXia/Soft-Muscle-Printing/blob/master/modeling/figures/z_plate_drawing.jpg)
 
 ### Photo of the soft muscle printer
 ![Artificial muscle printer](https://raw.githubusercontent.com/boxiXia/Soft-Muscle-Printing/master/figures/muscle%20printer%20front-web.png)
