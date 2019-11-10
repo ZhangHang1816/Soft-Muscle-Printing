@@ -10,7 +10,7 @@ The runnable jupyter notebook are [dog_bone muscle.ipynb](https://github.com/box
 
 ### CAD and STL model of the mixer and electronics housing.
 The raw Inventor model can be found in the [modeling](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling) folder. 
-The mixer CAD model can be found in in [./modeling/mixer_design](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/mixer_designw3). The converted stl model can be found in [./modeling/mixer_design/stl_model](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/mixer_design/stl_model).
+The mixer CAD model can be found in in [./modeling/mixer_design](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/mixer_design). The converted stl model can be found in [./modeling/mixer_design/stl_model](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/mixer_design/stl_model).
 The CAD model for laser-cutting the electronics housing can be found in [modeling/lasercut_electronics_housing](https://github.com/boxiXia/Soft-Muscle-Printing/tree/master/modeling/lasercut_electronics_housing).
 To open the CAD model (\*.ipt and \*.iam file), use [Autodesk Inventor 2019](https://www.autodesk.com/education/free-software/inventor-professional).
 
